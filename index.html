@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>专业汇率转化器 (手动/实时)</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
+        .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); width: 100%; max-width: 450px; }
+        h2 { text-align: center; color: #1a1a1a; margin-bottom: 25px; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 6px; color: #666; font-size: 14px; font-weight: 500; }
+        input { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 8px; box-sizing: border-box; font-size: 16px; transition: border 0.3s; }
+        input:focus { border-color: #007bff; outline: none; }
+        .rate-config { background: #fafafa; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px dashed #ccc; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .result-area { background: #f8f9ff; padding: 15px; border-radius: 10px; margin-top: 10px; border-left: 4px solid #007bff; }
+        .highlight { color: #d35400; font-size: 20px; font-weight: bold; }
+        .btn-sync { width: 100%; background: #007bff; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; margin-bottom: 10px; }
+        .btn-sync:hover { background: #0056b3; }
+        .footer-note { font-size: 12px; color: #999; margin-top: 15px; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>U 兑换计算器</h2>
+    
+    <button class="btn-sync" onclick="getRates()">🔄 点击获取全球实时汇率</button>
+
+    <div class="rate-config">
+        <label style="color: #333;">⚙️ 汇率设置 (可手动修改)</label>
+        <div class="grid">
+            <div class="input-group">
+                <label>1 U = ? HKD</label>
+                <input type="number" id="hkdRate" step="0.01" value="7.80" oninput="convert()">
+            </div>
+            <div class="input-group">
+                <label>1 U = ? RMB</label>
+                <input type="number" id="rmbRate" step="0.01" value="7.15" oninput="convert()">
+            </div>
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label>💰 持有港币金额 (HKD)</label>
+        <input type="number" id="hkdAmount" placeholder="输入港币，如 3000000" oninput="convert()">
+    </div>
+
+    <div class="result-area">
+        <div class="input-group">
+            <label>预计获得 U 数量</label>
+            <div id="usdtResult" class="highlight">0.00 U</div>
+        </div>
+        <div class="input-group" style="margin-bottom: 0;">
+            <label>最终折合人民币 (RMB)</label>
+            <div id="rmbResult" class="highlight" style="color: #27ae60;">¥ 0.00</div>
+        </div>
+    </div>
+
+    <div class="footer-note">
+        * 计算结果已根据您输入的实时汇率自动更新
+    </div>
+</div>
+
+<script>
+    async function getRates() {
+        const btn = document.querySelector('.btn-sync');
+        btn.innerText = "正在同步...";
+        try {
+            const res = await fetch('https://open.er-api.com/v6/latest/USD');
+            const data = await res.json();
+            
+            // 更新输入框的值
+            document.getElementById('hkdRate').value = data.rates.HKD.toFixed(2);
+            document.getElementById('rmbRate').value = data.rates.CNY.toFixed(2);
+            
+            btn.innerText = "✅ 同步成功";
+            setTimeout(() => { btn.innerText = "🔄 点击获取全球实时汇率"; }, 2000);
+            convert();
+        } catch (e) {
+            alert("获取失败，请检查网络或手动输入");
+            btn.innerText = "❌ 同步失败";
+        }
+    }
+
+    function convert() {
+        const amount = parseFloat(document.getElementById('hkdAmount').value) || 0;
+        const hRate = parseFloat(document.getElementById('hkdRate').value) || 0;
+        const rRate = parseFloat(document.getElementById('rmbRate').value) || 0;
+
+        if (hRate > 0) {
+            const usdt = amount / hRate;
+            const rmb = usdt * rRate;
+
+            document.getElementById('usdtResult').innerText = usdt.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " U";
+            document.getElementById('rmbResult').innerText = "¥ " + rmb.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+    }
+</script>
+
+</body>
+</html>
