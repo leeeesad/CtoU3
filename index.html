@@ -3,100 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>专业汇率转化器 (手动/实时)</title>
+    <title>U 兌換專業計算器 (含溢價模擬)</title>
     <style>
-        body { font-family: -apple-system, sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
-        .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); width: 100%; max-width: 450px; }
-        h2 { text-align: center; color: #1a1a1a; margin-bottom: 25px; }
-        .input-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 6px; color: #666; font-size: 14px; font-weight: 500; }
-        input { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 8px; box-sizing: border-box; font-size: 16px; transition: border 0.3s; }
-        input:focus { border-color: #007bff; outline: none; }
-        .rate-config { background: #fafafa; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px dashed #ccc; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .result-area { background: #f8f9ff; padding: 15px; border-radius: 10px; margin-top: 10px; border-left: 4px solid #007bff; }
-        .highlight { color: #d35400; font-size: 20px; font-weight: bold; }
-        .btn-sync { width: 100%; background: #007bff; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; margin-bottom: 10px; }
-        .btn-sync:hover { background: #0056b3; }
-        .footer-note { font-size: 12px; color: #999; margin-top: 15px; text-align: center; }
+        body { font-family: -apple-system, sans-serif; background: #f4f7f9; display: flex; justify-content: center; padding: 20px; }
+        .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 480px; }
+        h2 { text-align: center; color: #333; margin-bottom: 20px; }
+        .config-section { background: #fff9f0; border: 1px solid #ffeaa7; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        label { display: block; margin-bottom: 5px; color: #666; font-size: 13px; font-weight: bold; }
+        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 15px; }
+        .highlight-input { border: 2px solid #007bff; background: #f0f7ff; }
+        .result-card { background: #2d3436; color: white; padding: 20px; border-radius: 12px; margin-top: 20px; }
+        .result-item { margin-bottom: 10px; }
+        .result-label { font-size: 12px; color: #bdc3c7; }
+        .result-value { font-size: 22px; font-weight: bold; color: #00cec9; }
+        .premium-note { font-size: 12px; color: #d63031; margin-top: 5px; }
+        .btn-sync { width: 100%; background: #0984e3; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; margin-bottom: 15px; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>U 兑换计算器</h2>
+    <h2>U 兌換專業計算器</h2>
     
-    <button class="btn-sync" onclick="getRates()">🔄 点击获取全球实时汇率</button>
+    <button class="btn-sync" onclick="getRates()">🔄 同步國際中間價</button>
 
-    <div class="rate-config">
-        <label style="color: #333;">⚙️ 汇率设置 (可手动修改)</label>
+    <div class="config-section">
+        <label>⚙️ 匯率與溢價設置</label>
         <div class="grid">
             <div class="input-group">
-                <label>1 U = ? HKD</label>
-                <input type="number" id="hkdRate" step="0.01" value="7.80" oninput="convert()">
+                <label>國際中間價 (HKD)</label>
+                <input type="number" id="baseHkd" step="0.001" value="7.80" oninput="convert()">
             </div>
             <div class="input-group">
-                <label>1 U = ? RMB</label>
-                <input type="number" id="rmbRate" step="0.01" value="7.15" oninput="convert()">
+                <label>U 兌人民幣 (CNY)</label>
+                <input type="number" id="rmbRate" step="0.01" value="7.12" oninput="convert()">
             </div>
+        </div>
+        <div style="margin-top: 12px;">
+            <label style="color: #d63031;">⚠️ 店家上浮/溢價 (如 0.15)</label>
+            <input type="number" id="premium" step="0.01" value="0.15" class="highlight-input" oninput="convert()">
+            <div class="premium-note" id="actualRateTip">實際執行匯率：7.95</div>
         </div>
     </div>
 
     <div class="input-group">
-        <label>💰 持有港币金额 (HKD)</label>
-        <input type="number" id="hkdAmount" placeholder="输入港币，如 3000000" oninput="convert()">
+        <label>💰 持有港幣金額 (HKD)</label>
+        <input type="number" id="hkdAmount" placeholder="例如：10000" oninput="convert()">
     </div>
 
-    <div class="result-area">
-        <div class="input-group">
-            <label>预计获得 U 数量</label>
-            <div id="usdtResult" class="highlight">0.00 U</div>
+    <div class="result-card">
+        <div class="result-item">
+            <div class="result-label">預計獲得 U 數量</div>
+            <div id="usdtResult" class="result-value">0.00 U</div>
         </div>
-        <div class="input-group" style="margin-bottom: 0;">
-            <label>最终折合人民币 (RMB)</label>
-            <div id="rmbResult" class="highlight" style="color: #27ae60;">¥ 0.00</div>
+        <div class="result-item" style="margin-bottom: 0;">
+            <div class="result-label">最終換得人民幣 (RMB)</div>
+            <div id="rmbResult" class="result-value" style="color: #55efc4;">¥ 0.00</div>
         </div>
     </div>
 
-    <div class="footer-note">
-        * 计算结果已根据您输入的实时汇率自动更新
-    </div>
+    <p style="font-size: 11px; color: #999; text-align: center; margin-top: 15px;">
+        公式：港幣 ÷ (中間價 + 溢價) × 人民幣匯率
+    </p>
 </div>
 
 <script>
     async function getRates() {
         const btn = document.querySelector('.btn-sync');
-        btn.innerText = "正在同步...";
+        btn.innerText = "同步中...";
         try {
             const res = await fetch('https://open.er-api.com/v6/latest/USD');
             const data = await res.json();
-            
-            // 更新输入框的值
-            document.getElementById('hkdRate').value = data.rates.HKD.toFixed(2);
+            document.getElementById('baseHkd').value = data.rates.HKD.toFixed(3);
             document.getElementById('rmbRate').value = data.rates.CNY.toFixed(2);
-            
-            btn.innerText = "✅ 同步成功";
-            setTimeout(() => { btn.innerText = "🔄 点击获取全球实时汇率"; }, 2000);
+            btn.innerText = "✅ 已更新至最新中間價";
+            setTimeout(() => { btn.innerText = "🔄 同步國際中間價"; }, 2000);
             convert();
         } catch (e) {
-            alert("获取失败，请检查网络或手动输入");
-            btn.innerText = "❌ 同步失败";
+            alert("網絡錯誤，請手動輸入");
         }
     }
 
     function convert() {
         const amount = parseFloat(document.getElementById('hkdAmount').value) || 0;
-        const hRate = parseFloat(document.getElementById('hkdRate').value) || 0;
-        const rRate = parseFloat(document.getElementById('rmbRate').value) || 0;
+        const baseHkd = parseFloat(document.getElementById('baseHkd').value) || 0;
+        const rmbRate = parseFloat(document.getElementById('rmbRate').value) || 0;
+        const premium = parseFloat(document.getElementById('premium').value) || 0;
 
-        if (hRate > 0) {
-            const usdt = amount / hRate;
-            const rmb = usdt * rRate;
+        const actualRate = baseHkd + premium;
+        document.getElementById('actualRateTip').innerText = "實際執行匯率：1 U = " + actualRate.toFixed(3) + " HKD";
+
+        if (actualRate > 0) {
+            const usdt = amount / actualRate;
+            const rmb = usdt * rmbRate;
 
             document.getElementById('usdtResult').innerText = usdt.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " U";
             document.getElementById('rmbResult').innerText = "¥ " + rmb.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
         }
     }
+    // 初始化
+    convert();
 </script>
 
 </body>
