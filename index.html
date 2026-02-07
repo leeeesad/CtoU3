@@ -3,107 +3,187 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>U 兌換專業計算器 (含溢價模擬)</title>
+    <title>業務對沖利潤精算系統</title>
     <style>
-        body { font-family: -apple-system, sans-serif; background: #f4f7f9; display: flex; justify-content: center; padding: 20px; }
-        .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 480px; }
-        h2 { text-align: center; color: #333; margin-bottom: 20px; }
-        .config-section { background: #fff9f0; border: 1px solid #ffeaa7; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        label { display: block; margin-bottom: 5px; color: #666; font-size: 13px; font-weight: bold; }
-        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 15px; }
-        .highlight-input { border: 2px solid #007bff; background: #f0f7ff; }
-        .result-card { background: #2d3436; color: white; padding: 20px; border-radius: 12px; margin-top: 20px; }
-        .result-item { margin-bottom: 10px; }
-        .result-label { font-size: 12px; color: #bdc3c7; }
-        .result-value { font-size: 22px; font-weight: bold; color: #00cec9; }
-        .premium-note { font-size: 12px; color: #d63031; margin-top: 5px; }
-        .btn-sync { width: 100%; background: #0984e3; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; margin-bottom: 15px; font-weight: bold; }
+        :root { --primary: #0984e3; --success: #00b894; --danger: #d63031; --dark: #2d3436; }
+        body { font-family: -apple-system, sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 15px; margin: 0; }
+        .container { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 550px; }
+        h2 { text-align: center; color: var(--dark); margin-bottom: 20px; font-size: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        
+        /* 區塊樣式 */
+        .section { background: #f8f9fa; border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #e9ecef; }
+        .section-title { font-size: 13px; font-weight: bold; color: var(--primary); margin-bottom: 12px; display: flex; align-items: center; gap: 5px; }
+        
+        /* 網格佈局 */
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        
+        /* 輸入框 */
+        .input-group { margin-bottom: 10px; }
+        label { display: block; margin-bottom: 4px; color: #636e72; font-size: 11px; }
+        input { width: 100%; padding: 8px 10px; border: 1px solid #dfe6e9; border-radius: 6px; box-sizing: border-box; font-size: 14px; font-weight: 500; }
+        input:focus { border-color: var(--primary); outline: none; background: #fff; }
+        .cost-display { background: #e1f5fe; border: none; color: #01579b; font-weight: bold; }
+        
+        /* 利潤結果卡片 */
+        .profit-card { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-radius: 8px; margin-top: 8px; transition: 0.3s; }
+        .path-a { background: #e8f8f5; border-left: 4px solid var(--success); }
+        .path-b { background: #fff4e5; border-left: 4px solid #f39c12; }
+        .profit-val { font-size: 18px; font-weight: bold; }
+        
+        .btn-sync { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>U 兌換專業計算器</h2>
-    
-    <button class="btn-sync" onclick="getRates()">🔄 同步國際中間價</button>
+<div class="container">
+    <h2>📊 業務對沖與利潤精算</h2>
 
-    <div class="config-section">
-        <label>⚙️ 匯率與溢價設置</label>
-        <div class="grid">
+    <button class="btn-sync" onclick="syncRates()">🔄 獲取實時國際中間價</button>
+
+    <div class="section">
+        <div class="section-title">🪙 虛擬幣 (U) 成本鏈條</div>
+        <div class="grid-3">
             <div class="input-group">
-                <label>國際中間價 (HKD)</label>
-                <input type="number" id="baseHkd" step="0.001" value="7.80" oninput="convert()">
+                <label>人→U 基礎</label>
+                <input type="number" id="rmb_u_base" value="7.01" step="0.01" oninput="calc()">
             </div>
             <div class="input-group">
-                <label>U 兌人民幣 (CNY)</label>
-                <input type="number" id="rmbRate" step="0.01" value="7.12" oninput="convert()">
+                <label>U→港 基礎</label>
+                <input type="number" id="hkd_u_base" value="7.85" step="0.01" oninput="calc()">
+            </div>
+            <div class="input-group">
+                <label>U→澳 基礎</label>
+                <input type="number" id="mop_u_base" value="8.08" step="0.01" oninput="calc()">
             </div>
         </div>
-        <div style="margin-top: 12px;">
-            <label style="color: #d63031;">⚠️ 店家上浮/溢價 (如 0.15)</label>
-            <input type="number" id="premium" step="0.01" value="0.15" class="highlight-input" oninput="convert()">
-            <div class="premium-note" id="actualRateTip">實際執行匯率：7.95</div>
+        <div class="grid-3">
+            <div class="input-group">
+                <label>RMB上浮</label>
+                <input type="number" id="rmb_u_up" value="0.15" step="0.01" oninput="calc()">
+            </div>
+            <div class="input-group">
+                <label>港幣下浮</label>
+                <input type="number" id="hkd_u_down" value="0.03" step="0.01" oninput="calc()">
+            </div>
+            <div class="input-group">
+                <label>葡幣下浮</label>
+                <input type="number" id="mop_u_down" value="0.03" step="0.01" oninput="calc()">
+            </div>
+        </div>
+        <div class="grid-3">
+            <input type="text" id="cost_rmb_u" class="cost-display" readonly>
+            <input type="text" id="cost_hkd_u" class="cost-display" readonly>
+            <input type="text" id="cost_mop_u" class="cost-display" readonly>
         </div>
     </div>
 
-    <div class="input-group">
-        <label>💰 持有港幣金額 (HKD)</label>
-        <input type="number" id="hkdAmount" placeholder="例如：10000" oninput="convert()">
-    </div>
-
-    <div class="result-card">
-        <div class="result-item">
-            <div class="result-label">預計獲得 U 數量</div>
-            <div id="usdtResult" class="result-value">0.00 U</div>
-        </div>
-        <div class="result-item" style="margin-bottom: 0;">
-            <div class="result-label">最終換得人民幣 (RMB)</div>
-            <div id="rmbResult" class="result-value" style="color: #55efc4;">¥ 0.00</div>
+    <div class="section">
+        <div class="section-title">🏛️ 市場基準匯率</div>
+        <div class="grid-2">
+            <div class="input-group">
+                <label>場內 人→澳 (RMB/MOP)</label>
+                <input type="number" id="market_rmb_mop" value="0.93" step="0.001" oninput="calc()">
+            </div>
+            <div class="input-group">
+                <label>場內 港→澳 (HKD/MOP)</label>
+                <input type="number" id="market_hkd_mop" value="1.0315" step="0.0001" oninput="calc()">
+            </div>
         </div>
     </div>
 
-    <p style="font-size: 11px; color: #999; text-align: center; margin-top: 15px;">
-        公式：港幣 ÷ (中間價 + 溢價) × 人民幣匯率
-    </p>
+    <div class="section" style="background: #fff;">
+        <div class="section-title">💰 利潤點分析 (每 100 葡幣)</div>
+        <div class="profit-card path-a">
+            <div>
+                <div style="font-size: 12px; color: #16a085;">路徑 A: 人→U→澳</div>
+                <div id="profit_a_desc" style="font-size: 11px; color: #7f8c8d;"></div>
+            </div>
+            <div id="profit_a" class="profit-val" style="color: #16a085;">0.00</div>
+        </div>
+        <div class="profit-card path-b">
+            <div>
+                <div style="font-size: 12px; color: #d35400;">路徑 B: 人→U→港→澳</div>
+                <div id="profit_b_desc" style="font-size: 11px; color: #7f8c8d;"></div>
+            </div>
+            <div id="profit_b" class="profit-val" style="color: #d35400;">0.00</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">📱 快速換算</div>
+        <div class="grid-2">
+            <div class="input-group">
+                <label>輸入葡幣 (MOP)</label>
+                <input type="number" id="input_mop" placeholder="5000" oninput="calc()">
+            </div>
+            <div class="input-group">
+                <label>對比直接收 RMB</label>
+                <input type="text" id="compare_rmb" class="cost-display" readonly>
+            </div>
+        </div>
+        <div id="real_rmb_cost" style="font-size: 13px; color: #2d3436; margin-top: 5px; font-weight: bold;">
+            路徑B對沖成本: ¥ 0.00
+        </div>
+    </div>
 </div>
 
 <script>
-    async function getRates() {
-        const btn = document.querySelector('.btn-sync');
-        btn.innerText = "同步中...";
+    async function syncRates() {
         try {
             const res = await fetch('https://open.er-api.com/v6/latest/USD');
             const data = await res.json();
-            document.getElementById('baseHkd').value = data.rates.HKD.toFixed(3);
-            document.getElementById('rmbRate').value = data.rates.CNY.toFixed(2);
-            btn.innerText = "✅ 已更新至最新中間價";
-            setTimeout(() => { btn.innerText = "🔄 同步國際中間價"; }, 2000);
-            convert();
-        } catch (e) {
-            alert("網絡錯誤，請手動輸入");
-        }
+            document.getElementById('rmb_u_base').value = data.rates.CNY.toFixed(2);
+            document.getElementById('hkd_u_base').value = data.rates.HKD.toFixed(2);
+            document.getElementById('mop_u_base').value = (data.rates.HKD * 1.031).toFixed(2);
+            calc();
+        } catch (e) { alert("同步失敗"); }
     }
 
-    function convert() {
-        const amount = parseFloat(document.getElementById('hkdAmount').value) || 0;
-        const baseHkd = parseFloat(document.getElementById('baseHkd').value) || 0;
-        const rmbRate = parseFloat(document.getElementById('rmbRate').value) || 0;
-        const premium = parseFloat(document.getElementById('premium').value) || 0;
+    function calc() {
+        // 1. 獲取變量
+        const r_u_b = parseFloat(document.getElementById('rmb_u_base').value) || 0;
+        const r_u_u = parseFloat(document.getElementById('rmb_u_up').value) || 0;
+        const h_u_b = parseFloat(document.getElementById('hkd_u_base').value) || 0;
+        const h_u_d = parseFloat(document.getElementById('hkd_u_down').value) || 0;
+        const m_u_b = parseFloat(document.getElementById('mop_u_base').value) || 0;
+        const m_u_d = parseFloat(document.getElementById('mop_u_down').value) || 0;
+        
+        const m_rmb_mop = parseFloat(document.getElementById('market_rmb_mop').value) || 0;
+        const m_hkd_mop = parseFloat(document.getElementById('market_hkd_mop').value) || 0;
 
-        const actualRate = baseHkd + premium;
-        document.getElementById('actualRateTip').innerText = "實際執行匯率：1 U = " + actualRate.toFixed(3) + " HKD";
+        // 2. 計算實際成本
+        const cost_ru = r_u_b + r_u_u;
+        const cost_hu = h_u_b - h_u_d;
+        const cost_mu = m_u_b - m_u_d;
 
-        if (actualRate > 0) {
-            const usdt = amount / actualRate;
-            const rmb = usdt * rmbRate;
+        document.getElementById('cost_rmb_u').value = "成本: " + cost_ru.toFixed(2);
+        document.getElementById('cost_hkd_u').value = "成本: " + cost_hu.toFixed(2);
+        document.getElementById('cost_mop_u').value = "成本: " + cost_mu.toFixed(2);
 
-            document.getElementById('usdtResult').innerText = usdt.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " U";
-            document.getElementById('rmbResult').innerText = "¥ " + rmb.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-        }
+        // 3. 利潤點計算 (表格公式還原)
+        // 路徑 A: 人->U->澳
+        const u_path_a_rmb_cost = cost_ru / cost_mu;
+        const profit_a = (m_rmb_mop - u_path_a_rmb_cost) * 100;
+        
+        // 路徑 B: 人->U->港->澳
+        const u_path_b_mop_yield = cost_hu * m_hkd_mop;
+        const u_path_b_rmb_cost = cost_ru / u_path_b_mop_yield;
+        const profit_b = (m_rmb_mop - u_path_b_rmb_cost) * 100;
+
+        document.getElementById('profit_a').innerText = profit_a.toFixed(4);
+        document.getElementById('profit_b').innerText = profit_b.toFixed(4);
+        document.getElementById('profit_a_desc').innerText = `1 MOP 成本 ¥${u_path_a_rmb_cost.toFixed(4)}`;
+        document.getElementById('profit_b_desc').innerText = `1 MOP 成本 ¥${u_path_b_rmb_cost.toFixed(4)}`;
+
+        // 4. 快速換算
+        const inputMop = parseFloat(document.getElementById('input_mop').value) || 0;
+        document.getElementById('compare_rmb').value = "¥ " + (inputMop * m_rmb_mop).toFixed(2);
+        document.getElementById('real_rmb_cost').innerText = `路徑B對沖成本: ¥ ${(inputMop * u_path_b_rmb_cost).toFixed(2)}`;
     }
-    // 初始化
-    convert();
+
+    // 初始化計算
+    calc();
 </script>
 
 </body>
